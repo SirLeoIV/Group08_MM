@@ -6,6 +6,7 @@ import com.sailing.math.data_structures.Vector;
 import com.sailing.math.data_structures.Vector2D;
 import com.sailing.math.functions.DragFunction;
 import com.sailing.math.functions.LiftFunction;
+import com.sailing.math.functions.WaterDragFunction;
 import com.sailing.math.functions.WindForceAccelerationFunction;
 import com.sailing.math.solver.RungeKutta;
 import com.sailing.math.solver.Solver;
@@ -31,6 +32,10 @@ class WindTunnel extends Pane {
     LabelArrow dragForceArrow = new LabelArrow(new Arrow(Sailing.X_CENTER, Sailing.Y_CENTER, 100, 90, Color.GREEN), "F", "D");
     LabelArrow liftForceArrow = new LabelArrow(new Arrow(Sailing.X_CENTER, Sailing.Y_CENTER, 100, 90, Color.YELLOW), "F", "L");
     LabelArrow windForceArrow = new LabelArrow(new Arrow(Sailing.X_CENTER, Sailing.Y_CENTER, 100, 90, Color.ORANGE), "F", "D+L");
+    LabelArrow waterDragForceArrow = new LabelArrow(new Arrow(Sailing.X_CENTER, Sailing.Y_CENTER, 100, 90, Color.PURPLE), "F", "W");
+    LabelArrow finalAccelerationArrow = new LabelArrow(new Arrow(Sailing.X_CENTER, Sailing.Y_CENTER, 100, 90, Color.PINK), "a", "final");
+
+
 
     WindTunnel(SailboatGUI boat) {
         this.sailboat = boat;
@@ -53,7 +58,7 @@ class WindTunnel extends Pane {
 
         simulation = new Simulation(solver, stateSystem, 1);
 
-        getChildren().addAll(accelerationArrow, dragForceArrow, liftForceArrow,
+        getChildren().addAll(accelerationArrow, dragForceArrow, liftForceArrow, waterDragForceArrow, finalAccelerationArrow,
                 // velocityArrow, // TODO: reactivate this line to show the boat's velocity
                 windVelocityArrow, windForceArrow, apparentWindArrow);
         drawArrows(simulation.getCurrentState());
@@ -111,10 +116,16 @@ class WindTunnel extends Pane {
         Vector lift = new LiftFunction().eval(currentState, 1);
         Vector acceleration = new WindForceAccelerationFunction().eval(currentState, 1);
         Vector windForce = new WindForceAccelerationFunction().calculateAcceleration(currentState, 1);
+        Vector waterDrag = new WaterDragFunction().eval(currentState, 1);
+
+
         Vector2D dragForceVector = new Vector2D(drag.getValue(0), drag.getValue(1));
         Vector2D liftForceVector = new Vector2D(lift.getValue(0), lift.getValue(1));
+        Vector2D waterDragForceVector = new Vector2D(waterDrag.getValue(0), waterDrag.getValue(1));
         Vector2D accelerationVector = new Vector2D(acceleration.getValue(0), acceleration.getValue(1));
         Vector2D windForceVector = new Vector2D(windForce.getValue(0), windForce.getValue(1));
+        Vector2D finalAccelerationVector = new Vector2D(currentState.getAcceleration().getValue(0), currentState.getAcceleration().getValue(1));
+
 
         double scalar = 900;
 
@@ -137,6 +148,14 @@ class WindTunnel extends Pane {
         windForceArrow.setStartLengthAndAngle(new Vector2D(xStart, yStart),
                 windForceVector.getLength() * scalar,
                 windForceVector.toPolar().getX2());
+
+        waterDragForceArrow.setStartLengthAndAngle(new Vector2D(xStart, yStart),
+                waterDragForceVector.getLength() * scalar * (1d/currentState.getMass()),
+                waterDragForceVector.toPolar().getX2());
+        finalAccelerationArrow.setLengthAndAngle(
+                finalAccelerationVector.getLength() * scalar,
+                finalAccelerationVector.toPolar().getX2());
+
     }
 
     private void drawArrows(StateSystem currentState) {

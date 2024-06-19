@@ -52,12 +52,15 @@ public class WindForceAccelerationFunction implements Function {
         Vector drag = new DragFunction().eval(v1, v2, m, h, t);
         Vector lift = new LiftFunction().eval(v1, v2, m, h, t);
 
-        return drag.add(lift).multiplyByScalar(1d / m);
+        //return drag.add(lift).multiplyByScalar(1d / m);
+        Vector waterDrag = new WaterDragFunction().eval(v1, v2, m, h, t);
+        return drag.add(lift).add(waterDrag).multiplyByScalar(1d / m);
     }
 
     public Vector calculateAcceleration(StateSystem stateSystem, double h) {
         return calculateAcceleration(stateSystem.getPosition(), stateSystem.getVelocity(), stateSystem.getMass(), h, stateSystem.getTime());
     }
-    
+
+
 
 }
